@@ -1,4 +1,4 @@
-import { useState, memo, useEffect } from "react";
+import { useState, memo, useEffect, useCallback } from "react";
 import clickSound from "./ClickSound.m4a";
 
 /* HANDLING THE PERFORMANCE ISSUE ?
@@ -17,9 +17,20 @@ function Calculator({ workouts, allowSound }) {
 
   const [duration, setDuration] = useState(0);
 
+  // const playSound = useCallback(
+  //   function () {
+  //     if (!allowSound) return;
+  //     const sound = new Audio(clickSound); // Here we are using the Audio API provided by the browser
+  //     sound.play(); // So we are calling the play() method on the sound object
+  //   },
+  //   [allowSound]
+  // ); // Here the allowSound state variable is a reactive value where it changes over time and so we are keeping this
+  // // reactive value in our dependency array.
+
   // We are implementing the below useEffect only when the below four state variables which are number, sets, speed and
   //   durationBreak which are influencing another state variable which is duration state variable.
   useEffect(
+    // This effect is only responsible for updating the duration state variable.
     function () {
       setDuration((number * sets * speed) / 60 + (sets - 1) * durationBreak);
     },
@@ -27,15 +38,23 @@ function Calculator({ workouts, allowSound }) {
     // changes , So if any of the above state variable changes then this useEffect hook will run and update the setDuration()
   );
 
+  useEffect(
+    // This effect is seperately created for only playing the sound.
+    function () {
+      const playSound = function () {
+        if (!allowSound) return;
+        const sound = new Audio(clickSound); // Here we are using the Audio API provided by the browser
+        sound.play(); // So we are calling the play() method on the sound object
+      };
+
+      playSound();
+    },
+    [duration, allowSound]
+  );
+
   // const duration = (number * sets * speed) / 60 + (sets - 1) * durationBreak;
   const mins = Math.floor(duration);
   const seconds = (duration - mins) * 60;
-
-  const playSound = function () {
-    if (!allowSound) return;
-    const sound = new Audio(clickSound);
-    sound.play();
-  };
 
   function handleInc() {
     setDuration((duration) => Math.floor(duration) + 1);
